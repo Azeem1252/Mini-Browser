@@ -337,6 +337,17 @@ void startServer() {
         res.set_content(engine.switchTab(), "application/json");
     });
 
+    server.set_pre_routing_handler([](const Request& req, Response& res) {
+        res.set_header("Access-Control-Allow-Origin", "*");
+        res.set_header("Access-Control-Allow-Methods", "GET, POST, PUT, DELETE, OPTIONS");
+        res.set_header("Access-Control-Allow-Headers", "Content-Type, Authorization");
+        if (req.method == "OPTIONS") {
+            res.status = 204;
+            return Server::HandlerResponse::Handled;
+        }
+        return Server::HandlerResponse::Unhandled;
+    });
+
     server.Get("/api/health", [&](const Request& req, Response& res) {
         res.set_content("{\"status\":\"ok\"}", "application/json");
     });
