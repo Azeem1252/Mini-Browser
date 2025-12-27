@@ -10,14 +10,9 @@
  *   data structures in a real-world application.
  * 
  * Data Structures Used:
- *   1. Stack           - Back/Forward navigation
- *   2. Doubly Linked   - Browsing history
- *   3. Circular List   - Tab management
- *   4. BST             - Bookmarks (sorted)
- *   5. Hash Map + DLL  - LRU Cache
- *   6. Queue           - Download manager
- *   7. Trie            - URL autocomplete
- *   8. Tree            - DOM (HTML structure)
+ *   5. Queue           - Download manager
+ *   6. Trie            - URL autocomplete
+ *   7. Tree            - DOM (HTML structure)
  */
 
 #include "server/ApiServer.cpp"
@@ -39,9 +34,7 @@ int main() {
     cout << "   ✓ Doubly Linked List (Browsing History)\n";
     cout << "   ✓ Circular Linked List (Tab Management)\n";
     cout << "   ✓ Binary Search Tree (Bookmarks)\n";
-    cout << "   ✓ Hash Map + DoublyLL (LRU Cache)\n";
     cout << "   ✓ Queue (Download Manager)\n";
-    cout << "   ✓ Trie (URL Auto-complete)\n";
     cout << "\n";
     
     // Explain the architecture
