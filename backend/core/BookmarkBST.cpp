@@ -46,7 +46,8 @@ public:
 
     // Search for a specific bookmark by title
     // Returns nullptr if not found
-    Bookmark* findBookmark(string title) {
-        return bookmarkTree.search(title);
+    // Remove a bookmark by its title
+    void deleteBookmark(string title) {
+        bookmarkTree.remove(title);
     }
 };

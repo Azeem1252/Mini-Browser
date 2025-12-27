@@ -53,10 +53,17 @@ export const BookmarksPanel: React.FC<BookmarksPanelProps> = ({
         }
     }, [isOpen, loadBookmarks]);
 
-    const handleDelete = (id: number) => {
-        // TODO: Implement backend delete when endpoint is ready
-        setBookmarks(prev => prev.filter((b) => b.id !== id));
-        onShowToast?.('info', 'Bookmark Removed', 'UI updated. Backend sync pending.');
+    const handleDelete = async (id: number) => {
+        const bookmarkToDelete = bookmarks.find(b => b.id === id);
+        if (!bookmarkToDelete) return;
+
+        const success = await ApiClient.deleteBookmark(bookmarkToDelete.title);
+        if (success) {
+            setBookmarks(prev => prev.filter((b) => b.id !== id));
+            onShowToast?.('success', 'Bookmark Deleted', 'Removed from C++ Backend.');
+        } else {
+            onShowToast?.('error', 'Delete Failed', 'Could not sync with backend.');
+        }
     };
 
     const handleNavigate = (url: string) => {

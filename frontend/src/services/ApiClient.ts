@@ -134,5 +134,56 @@ export const ApiClient = {
             console.error('Failed to sync download:', error);
             return false;
         }
+    },
+
+    // Undo & Session Management
+    undo: async (): Promise<boolean> => {
+        try {
+            const response = await fetch(`${API_BASE}/api/undo`, { method: 'POST' });
+            const data = await response.json();
+            return !!data.success;
+        } catch (error) {
+            console.error('Undo failed:', error);
+            return false;
+        }
+    },
+
+    createTab: async (): Promise<boolean> => {
+        try {
+            const response = await fetch(`${API_BASE}/api/tabs/new`, { method: 'POST' });
+            const data = await response.json();
+            return !!data.success;
+        } catch (error) {
+            console.error('Failed to create tab on backend:', error);
+            return false;
+        }
+    },
+
+    closeTab: async (tabId: number): Promise<boolean> => {
+        try {
+            const response = await fetch(`${API_BASE}/api/tabs/close`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ tabId })
+            });
+            const data = await response.json();
+            return !!data.success;
+        } catch (error) {
+            console.error('Failed to close tab on backend:', error);
+            return false;
+        }
+    },
+
+    deleteBookmark: async (title: string): Promise<boolean> => {
+        try {
+            const response = await fetch(`${API_BASE}/api/bookmarks?title=${encodeURIComponent(title)}`, {
+                method: 'DELETE'
+            });
+            const data = await response.json();
+            return !!data.success;
+        } catch (error) {
+            console.error('Failed to delete bookmark:', error);
+            return false;
+        }
     }
 };

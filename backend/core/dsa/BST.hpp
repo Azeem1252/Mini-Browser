@@ -81,6 +81,42 @@ class BST {
         inorder(node->right, result);     // 3. Visit right subtree
     }
 
+    // Find the node with the minimum value (used for deletion)
+    Node* findMin(Node* node) {
+        while (node->left != nullptr) node = node->left;
+        return node;
+    }
+
+    // Recursively remove a node by key
+    Node* remove(Node* node, K key) {
+        if (node == nullptr) return nullptr;
+
+        if (key < node->key) {
+            node->left = remove(node->left, key);
+        } else if (key > node->key) {
+            node->right = remove(node->right, key);
+        } else {
+            // Case 1: No child or 1 child
+            if (node->left == nullptr) {
+                Node* temp = node->right;
+                delete node;
+                return temp;
+            } else if (node->right == nullptr) {
+                Node* temp = node->left;
+                delete node;
+                return temp;
+            }
+
+            // Case 2: Two children
+            // Find smallest in right subtree
+            Node* temp = findMin(node->right);
+            node->key = temp->key;
+            node->value = temp->value;
+            node->right = remove(node->right, temp->key);
+        }
+        return node;
+    }
+
     // Recursively delete all nodes (cleanup memory)
     void clear(Node* node) {
         if (node == nullptr) return;
@@ -102,6 +138,11 @@ public:
     // Add a key-value pair to the tree
     void insert(K key, V value) { 
         root = insert(root, key, value); 
+    }
+
+    // Remove a key-value pair from the tree
+    void remove(K key) {
+        root = remove(root, key);
     }
 
     // Get all values in sorted order by key

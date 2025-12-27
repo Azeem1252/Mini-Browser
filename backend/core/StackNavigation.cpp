@@ -21,6 +21,8 @@
 #include "dsa/Stack.hpp"
 #include <string>
 #include <iostream>
+#include <fstream>
+#include <vector>
 
 using namespace std;
 
@@ -102,5 +104,50 @@ public:
     // Check if Forward button should be enabled
     bool canGoForward() { 
         return !forwardStack.isEmpty(); 
+    }
+
+    // Persistence: Save stacks to a unique file for this tab
+    void saveToFile(string filename) {
+        ofstream file(filename);
+        if (!file.is_open()) return;
+
+        file << currentUrl << endl;
+        
+        // Save back history (oldest first for reconstruction)
+        vector<string> back;
+        while (!backStack.isEmpty()) back.push_back(backStack.pop());
+        for (int i = back.size() - 1; i >= 0; i--) {
+            file << "B|" << back[i] << endl;
+            backStack.push(back[i]); // Restore stack
+        }
+
+        // Save forward history
+        vector<string> fwd;
+        while (!forwardStack.isEmpty()) fwd.push_back(forwardStack.pop());
+        for (int i = fwd.size() - 1; i >= 0; i--) {
+            file << "F|" << fwd[i] << endl;
+            forwardStack.push(fwd[i]); // Restore stack
+        }
+        file.close();
+    }
+
+    void loadFromFile(string filename) {
+        ifstream file(filename);
+        if (!file.is_open()) return;
+
+        backStack.clear();
+        forwardStack.clear();
+        
+        string line;
+        if (getline(file, line)) currentUrl = line;
+
+        while (getline(file, line)) {
+            if (line.substr(0, 2) == "B|") {
+                backStack.push(line.substr(2));
+            } else if (line.substr(0, 2) == "F|") {
+                forwardStack.push(line.substr(2));
+            }
+        }
+        file.close();
     }
 };

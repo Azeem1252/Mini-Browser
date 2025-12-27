@@ -7,12 +7,15 @@
 #include "httplib.h"
 #include "json.hpp"
 #include "../network/HttpClient.cpp"
-#include "../core/TabManagerCircularList.cpp"
+#include "../core/TabManagerDoublyLinkedList.cpp"
 #include "../core/BookmarkBST.cpp"
 #include "../core/HistoryDoublyLinkedList.cpp"
 #include "../parser/HTMLParser.cpp"
 #include "../parser/DOMSerializer.hpp"
 #include "../core/dsa/Queue.hpp"
+#include "../core/dsa/PriorityQueue.hpp"
+#include "../core/Command.hpp"
+#include "../core/UndoManager.cpp"
 #include <iostream>
 #include <fstream>
 #include <ctime>
@@ -42,18 +45,26 @@ private:
     HistoryManager historyManager;
     HttpClient httpClient;
     HTMLParser htmlParser;
-    Queue<DownloadEntry> downloadQueue;
+    PriorityQueue<DownloadEntry> downloadQueue;
     vector<DownloadEntry> downloadHistory;
+    UndoManager undoManager;
 
 public:
     BrowserEngine() {
         loadHistoryFromFile();
         loadBookmarksFromFile();
+        tabManager.loadSession();
     }
 
-    void addDownload(string id, string filename, string url) {
+    ~BrowserEngine() {
+        tabManager.saveSession();
+        saveHistoryToFile();
+        saveBookmarksFromFile();
+    }
+
+    void addDownload(string id, string filename, string url, int priority = 1) {
         DownloadEntry entry = {id, filename, url, "downloading", (long long)time(nullptr)};
-        downloadQueue.enqueue(entry);
+        downloadQueue.push(entry, priority);
         downloadHistory.push_back(entry);
     }
 
@@ -196,7 +207,28 @@ public:
         oss << "]";
         return oss.str();
     }
-    string createNewTab() { tabManager.createNewTab(); return "{\"success\":true}"; }
+
+    // Command implementations would go here or in a separate file
+    // For now, let's add basic undo support
+    string undo() {
+        undoManager.undo();
+        return "{\"success\":true}";
+    }
+
+    string createNewTab() { 
+        undoManager.executeCommand(new OpenTabCommand(&tabManager));
+        tabManager.saveSession();
+        return "{\"success\":true}"; 
+    }
+    
+    string closeTab(int tabId = 0) {
+        Tab* t = getTabById(tabId);
+        if (!t) return "{\"error\":\"Tab not found\"}";
+
+        undoManager.executeCommand(new CloseTabCommand(&tabManager, t->id, t->title, t->nav.getCurrentUrl()));
+        tabManager.saveSession();
+        return "{\"success\":true}";
+    }
     string switchTab() {
         tabManager.switchTab();
         Tab* t = tabManager.getCurrentTab();
@@ -246,6 +278,17 @@ void startServer() {
     server.Post("/api/forward", [&](const Request& req, Response& res) {
         string tId = jsonValue(req.body, "tabId");
         res.set_content(engine.goForward(tId.empty() ? 0 : stoi(tId)), "application/json");
+    });
+
+    server.Post("/api/undo", [&](const Request& req, Response& res) {
+        res.set_content(engine.undo(), "application/json");
+    });
+
+    server.Delete("/api/bookmarks", [&](const Request& req, Response& res) {
+        string title = req.get_param_value("title");
+        engine.bookmarkManager.deleteBookmark(title);
+        engine.saveBookmarksFromFile();
+        res.set_content("{\"success\":true}", "application/json");
     });
 
     server.Get("/api/tabs/status", [&](const Request& req, Response& res) {

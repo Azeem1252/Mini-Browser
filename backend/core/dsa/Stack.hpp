@@ -3,6 +3,8 @@
 
 #include <stdexcept>
 
+using namespace std;
+
 template <typename T>
 class Stack {
 private:
@@ -24,7 +26,7 @@ public:
         stackSize++;
     }
     T pop() {
-        if (isEmpty()) throw std::runtime_error("Stack Underflow");
+        if (isEmpty()) throw runtime_error("Stack Underflow");
         Node* temp = topNode;
         T val = temp->data;
         topNode = topNode->next;
@@ -33,7 +35,7 @@ public:
         return val;
     }
     T peek() const {
-        if (isEmpty()) throw std::runtime_error("Stack Empty");
+        if (isEmpty()) throw runtime_error("Stack Empty");
         return topNode->data;
     }
     bool isEmpty() const { return topNode == nullptr; }

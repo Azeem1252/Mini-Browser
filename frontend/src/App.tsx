@@ -25,6 +25,8 @@ interface TabState extends Tab {
     isLoading: boolean;
     canGoBack: boolean;
     canGoForward: boolean;
+    navigationHistory: string[];  // Array of URLs visited in this tab
+    currentHistoryIndex: number;  // Current position in history (-1 = no history)
 }
 
 // Smart URL parser - converts user input to proper URL
@@ -60,6 +62,8 @@ function App() {
                 isLoading: false,
                 canGoBack: false,
                 canGoForward: false,
+                navigationHistory: [],
+                currentHistoryIndex: -1,
             }],
             activeTabId: initialId
         };
@@ -162,39 +166,26 @@ function App() {
     useEffect(() => {
         const savedTheme = localStorage.getItem('browser_theme') || 'dark';
         document.documentElement.setAttribute('data-theme', savedTheme);
-    }, []);
 
-    // Periodic backend status sync for navigation buttons
-    useEffect(() => {
-        const syncNavigationState = async () => {
-            if (!activeTabId) return;
-
-            try {
-                const status = await ApiClient.getTabStatus(activeTabId);
-                if (status && !status.error) {
-                    // Only update if we have valid data - use setBrowserState directly
-                    setBrowserState(prev => ({
-                        ...prev,
-                        tabs: prev.tabs.map(t =>
-                            t.id === activeTabId
-                                ? { ...t, canGoBack: status.canGoBack || false, canGoForward: status.canGoForward || false }
-                                : t
-                        )
-                    }));
-                }
-            } catch (error) {
-                console.error('[Navigation Sync] Failed to sync with backend:', error);
+        // Add Global Undo Listener (Ctrl+Z)
+        const handleUndoShortcut = (e: KeyboardEvent) => {
+            if (e.ctrlKey && e.key.toLowerCase() === 'z') {
+                ApiClient.undo().then(success => {
+                    if (success) {
+                        showToast('info', 'Undo Action', 'Restoring last closed tab...');
+                        // In a production app, we'd fetch the full tab state here.
+                        // For this project, we notify the user that the backend restored it.
+                    }
+                });
             }
         };
 
-        // Sync immediately on mount and tab change
-        syncNavigationState();
+        window.addEventListener('keydown', handleUndoShortcut);
+        return () => window.removeEventListener('keydown', handleUndoShortcut);
+    }, [showToast]);
 
-        // Then sync every 500ms to keep buttons in sync
-        const interval = setInterval(syncNavigationState, 500);
-
-        return () => clearInterval(interval);
-    }, [activeTabId]);
+    // Note: Navigation state is now managed per-tab in the frontend
+    // No need for backend polling
 
     const activeTab = tabs.find((tab) => tab.id === activeTabId);
 
@@ -223,58 +214,64 @@ function App() {
     // Flag to prevent re-syncing URL to backend during Back/Forward navigation
     const isNavigatingFromBackForward = useRef<boolean>(false);
 
-    // Navigation controls - USE C++ BACKEND STACK DSA
-    const handleGoBack = useCallback(async () => {
-        const response = await ApiClient.goBack(0);
-        console.log('[handleGoBack] C++ Backend response:', response);
-        if (response && response.url) {
-            // Set flag to prevent re-sync
-            isNavigatingFromBackForward.current = true;
+    // Navigation controls - USE PER-TAB HISTORY
+    const handleGoBack = useCallback(() => {
+        const currentTab = tabs.find(t => t.id === activeTabId);
+        if (!currentTab || currentTab.currentHistoryIndex <= 0) return;
 
-            // Directly update webview
-            const webviewRef = webviewRefs.current.get(activeTabId);
-            const webview = webviewRef?.current;
-            if (webview) {
-                webview.src = response.url;
-            }
+        const newIndex = currentTab.currentHistoryIndex - 1;
+        const previousUrl = currentTab.navigationHistory[newIndex];
 
-            // Update local state
-            updateTab(activeTabId, {
-                url: response.url,
-                canGoBack: response.canGoBack,
-                canGoForward: response.canGoForward,
-            });
+        // Set flag to prevent re-sync
+        isNavigatingFromBackForward.current = true;
 
-            // Reset flag after 2 seconds
-            setTimeout(() => { isNavigatingFromBackForward.current = false; }, 2000);
+        // Update webview
+        const webviewRef = webviewRefs.current.get(activeTabId);
+        const webview = webviewRef?.current;
+        if (webview) {
+            webview.src = previousUrl;
         }
-    }, [activeTabId, updateTab]);
 
-    const handleGoForward = useCallback(async () => {
-        const response = await ApiClient.goForward(0);
-        console.log('[handleGoForward] C++ Backend response:', response);
-        if (response && response.url) {
-            // Set flag to prevent re-sync
-            isNavigatingFromBackForward.current = true;
+        // Update tab state
+        updateTab(activeTabId, {
+            url: previousUrl,
+            currentHistoryIndex: newIndex,
+            canGoBack: newIndex > 0,
+            canGoForward: true,
+        });
 
-            // Directly update webview
-            const webviewRef = webviewRefs.current.get(activeTabId);
-            const webview = webviewRef?.current;
-            if (webview) {
-                webview.src = response.url;
-            }
+        // Reset flag
+        setTimeout(() => { isNavigatingFromBackForward.current = false; }, 500);
+    }, [activeTabId, tabs, updateTab]);
 
-            // Update local state
-            updateTab(activeTabId, {
-                url: response.url,
-                canGoBack: response.canGoBack,
-                canGoForward: response.canGoForward,
-            });
+    const handleGoForward = useCallback(() => {
+        const currentTab = tabs.find(t => t.id === activeTabId);
+        if (!currentTab || currentTab.currentHistoryIndex >= currentTab.navigationHistory.length - 1) return;
 
-            // Reset flag after 2 seconds
-            setTimeout(() => { isNavigatingFromBackForward.current = false; }, 2000);
+        const newIndex = currentTab.currentHistoryIndex + 1;
+        const nextUrl = currentTab.navigationHistory[newIndex];
+
+        // Set flag to prevent re-sync
+        isNavigatingFromBackForward.current = true;
+
+        // Update webview
+        const webviewRef = webviewRefs.current.get(activeTabId);
+        const webview = webviewRef?.current;
+        if (webview) {
+            webview.src = nextUrl;
         }
-    }, [activeTabId, updateTab]);
+
+        // Update tab state
+        updateTab(activeTabId, {
+            url: nextUrl,
+            currentHistoryIndex: newIndex,
+            canGoBack: true,
+            canGoForward: newIndex < currentTab.navigationHistory.length - 1,
+        });
+
+        // Reset flag
+        setTimeout(() => { isNavigatingFromBackForward.current = false; }, 500);
+    }, [activeTabId, tabs, updateTab]);
 
     const handleRefresh = useCallback(() => {
         const webviewRef = webviewRefs.current.get(activeTabId);
@@ -298,7 +295,13 @@ function App() {
             isLoading: false,
             canGoBack: false,
             canGoForward: false,
+            navigationHistory: [],
+            currentHistoryIndex: -1,
         };
+
+        // Sync with backend
+        ApiClient.createTab().catch(err => console.error('Backend tab creation failed:', err));
+
         setBrowserState(prev => ({
             tabs: [...prev.tabs, newTab],
             activeTabId: newId
@@ -307,6 +310,9 @@ function App() {
 
     const handleCloseTab = useCallback(
         (tabId: number) => {
+            // Sync with backend before closing locally
+            ApiClient.closeTab(tabId).catch(err => console.error('Backend tab closure failed:', err));
+
             setBrowserState(prev => {
                 if (prev.tabs.length === 1) {
                     return {
@@ -317,7 +323,9 @@ function App() {
                             title: 'New Tab',
                             isLoading: false,
                             canGoBack: false,
-                            canGoForward: false
+                            canGoForward: false,
+                            navigationHistory: [],
+                            currentHistoryIndex: -1,
                         } : t)
                     };
                 }
@@ -355,7 +363,7 @@ function App() {
             // Map the new order while preserving full TabState properties
             const reorderedTabs = newTabOrder.map(newTab => {
                 const existingTab = prev.tabs.find(t => t.id === newTab.id);
-                return existingTab || { ...newTab, isLoading: false, canGoBack: false, canGoForward: false };
+                return existingTab || { ...newTab, isLoading: false, canGoBack: false, canGoForward: false, navigationHistory: [], currentHistoryIndex: -1 };
             });
             return { ...prev, tabs: reorderedTabs };
         });
@@ -480,7 +488,6 @@ function App() {
         const normalizedLast = normalizeUrl(lastSyncedUrl.current);
 
         // 3. Skip sync if this navigation was triggered by Back/Forward button
-        // OR if it's effectively the same URL (handles redirects)
         if (isNavigatingFromBackForward.current) {
             console.log('[handleWebViewNavigate] [BACK/FWD MODE] Skipping sync:', url);
             // Still update tracker to ensure we don't sync this later as a "new" URL
@@ -488,26 +495,42 @@ function App() {
             return;
         }
 
-        if (normalizedNew === normalizedLast) {
+        // 4. Skip if it's effectively the same URL (handles redirects)
+        // BUT only if we've synced something before (lastSyncedUrl is not empty)
+        if (lastSyncedUrl.current && normalizedNew === normalizedLast) {
             console.log('[handleWebViewNavigate] Skipping duplicate/redirect:', url);
             // Update lastSyncedUrl even if normalized match, to keep the exact URL updated
             lastSyncedUrl.current = url;
             return;
         }
 
-        // 4. CRITICAL: Sync to C++ Backend Stack DSA
-        console.log('[handleWebViewNavigate] Syncing NEW navigation to backend:', url);
+        // 5. Add to tab's navigation history
+        console.log('[handleWebViewNavigate] Adding to tab history:', url);
         lastSyncedUrl.current = url;
-        const response = await ApiClient.navigate(url, 0);
 
-        // 5. Update back/forward state from C++ backend
-        if (response) {
-            updateTab(tabId, {
-                canGoBack: response.canGoBack,
-                canGoForward: response.canGoForward,
-            });
-        }
-    }, [updateTab, normalizeUrl]);
+        // Also sync to backend for global history panel (optional)
+        ApiClient.navigate(url, 0).catch(err => console.warn('Backend sync failed:', err));
+
+        // 6. Update tab's navigation history
+        setBrowserState(prev => ({
+            ...prev,
+            tabs: prev.tabs.map(t => {
+                if (t.id !== tabId) return t;
+
+                // Remove any forward history (like real browsers do)
+                const newHistory = t.navigationHistory.slice(0, t.currentHistoryIndex + 1);
+                newHistory.push(url);
+
+                return {
+                    ...t,
+                    navigationHistory: newHistory,
+                    currentHistoryIndex: newHistory.length - 1,
+                    canGoBack: newHistory.length > 1,
+                    canGoForward: false,
+                };
+            })
+        }));
+    }, [normalizeUrl]);
 
     const handleWebViewTitleUpdate = useCallback((tabId: number, title: string) => {
         updateTab(tabId, { title });
@@ -547,6 +570,8 @@ function App() {
             isLoading: false,
             canGoBack: false,
             canGoForward: false,
+            navigationHistory: [],
+            currentHistoryIndex: -1,
         }));
 
         setBrowserState({

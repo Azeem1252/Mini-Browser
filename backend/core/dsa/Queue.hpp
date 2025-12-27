@@ -3,6 +3,8 @@
 
 #include <stdexcept>
 
+using namespace std;
+
 template <typename T>
 class Queue {
 private:
@@ -28,7 +30,7 @@ public:
         queueSize++;
     }
     T dequeue() {
-        if (isEmpty()) throw std::runtime_error("Queue Underflow");
+        if (isEmpty()) throw runtime_error("Queue Underflow");
         Node* temp = front;
         T val = temp->data;
         front = front->next;
