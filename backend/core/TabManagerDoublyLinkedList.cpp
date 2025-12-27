@@ -1,3 +1,6 @@
+#ifndef TAB_MANAGER_DOUBLY_LINKED_LIST_CPP
+#define TAB_MANAGER_DOUBLY_LINKED_LIST_CPP
+#pragma once
 /*
  * ==============================================
  * TAB MANAGER (Doubly Linked List Implementation)
@@ -82,22 +85,27 @@ public:
         return currentTabNode ? currentTabNode->data : nullptr;
     }
 
+    void closeTabById(int id) {
+        auto current = tabs.getHead();
+        while (current) {
+            if (current->data->id == id) {
+                // If closing the active tab, switch to another one first
+                if (current == currentTabNode) {
+                    if (current->next) currentTabNode = current->next;
+                    else currentTabNode = current->prev;
+                }
+                
+                delete current->data;
+                tabs.removeNode(current);
+                return;
+            }
+            current = current->next;
+        }
+    }
+
     void closeCurrentTab() {
-        if (tabs.size() <= 1 || !currentTabNode) {
-            return;
-        }
-
-        auto nodeToDelete = currentTabNode;
-        
-        // Decide which tab becomes active after closing
-        if (currentTabNode->next) {
-            currentTabNode = currentTabNode->next;
-        } else {
-            currentTabNode = currentTabNode->prev;
-        }
-
-        delete nodeToDelete->data;
-        tabs.removeNode(nodeToDelete);
+        if (tabs.size() <= 1 || !currentTabNode) return;
+        closeTabById(currentTabNode->data->id);
     }
 
     int getTabCount() {
@@ -136,8 +144,14 @@ public:
         ifstream file("tabs.txt");
         if (!file.is_open()) return;
 
-        // Clear existing initial tab
-        while (tabs.size() > 0) closeCurrentTab();
+        // Clear existing initial tabs properly
+        auto currentNode = tabs.getHead();
+        while (currentNode) {
+            delete currentNode->data;
+            currentNode = currentNode->next;
+        }
+        tabs.clear();
+        currentTabNode = nullptr;
 
         string line;
         while (getline(file, line)) {
@@ -170,4 +184,10 @@ public:
         }
         return nullptr;
     }
+
+    typename DoublyLinkedList<Tab*>::Node* getHead() {
+        return tabs.getHead();
+    }
 };
+
+#endif

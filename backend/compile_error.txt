@@ -1,0 +1,9 @@
+In file included from server/ApiServer.cpp:16,
+                 from main.cpp:20:
+server/../core/dsa/Queue.hpp: In instantiation of 'bool Queue<T>::isEmpty() const [with T = DownloadEntry]':
+server/ApiServer.cpp:110:45:   required from here
+  110 |             } else if (!pendingQueue.isEmpty()) {
+      |                         ~~~~~~~~~~~~~~~~~~~~^~
+server/../core/dsa/Queue.hpp:32:21: error: 'const class DoublyLinkedList<DownloadEntry>' has no member named 'isEmpty'
+   32 |         return list.isEmpty();
+      |                ~~~~~^~~~~~~

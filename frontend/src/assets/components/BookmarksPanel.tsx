@@ -16,6 +16,7 @@ interface BookmarksPanelProps {
     onClose: () => void;
     onNavigate: (url: string) => void;
     onShowToast?: (type: 'info' | 'success' | 'warning' | 'error', title: string, message: string) => void;
+    isBackendOnline: boolean;
 }
 
 export const BookmarksPanel: React.FC<BookmarksPanelProps> = ({
@@ -23,6 +24,7 @@ export const BookmarksPanel: React.FC<BookmarksPanelProps> = ({
     onClose,
     onNavigate,
     onShowToast,
+    isBackendOnline,
 }) => {
     const [bookmarks, setBookmarks] = useState<Bookmark[]>([]);
     const [searchQuery, setSearchQuery] = useState('');
@@ -111,6 +113,15 @@ export const BookmarksPanel: React.FC<BookmarksPanelProps> = ({
                         onChange={(e) => setSearchQuery(e.target.value)}
                     />
                 </div>
+
+                {!isBackendOnline && (
+                    <div className="offline-notice">
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor">
+                            <path d="M10.29 3.86L1.82 18a2 2 0 001.71 3h16.94a2 2 0 001.71-3L13.71 3.86a2 2 0 00-3.42 0zM12 9v4M12 17h.01" strokeWidth="2" strokeLinecap="round" />
+                        </svg>
+                        <span>Backend Offline: Synchronization and removal are disabled.</span>
+                    </div>
+                )}
 
                 <div className="panel-content">
                     {filteredBookmarks.length === 0 ? (

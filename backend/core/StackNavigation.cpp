@@ -1,3 +1,4 @@
+#pragma once
 /*
  * ==============================================
  * BROWSER NAVIGATION (Back/Forward)

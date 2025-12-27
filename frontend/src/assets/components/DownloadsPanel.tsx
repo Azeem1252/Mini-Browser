@@ -1,5 +1,6 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import './BookmarksPanel.css';
+import { ApiClient } from '../../services/ApiClient';
 
 export interface Download {
     id: string;
@@ -8,7 +9,7 @@ export interface Download {
     size: number;
     progress: number;
     received: number;
-    status: 'downloading' | 'completed' | 'paused' | 'failed' | 'cancelled' | 'interrupted';
+    status: 'downloading' | 'completed' | 'paused' | 'failed' | 'cancelled' | 'interrupted' | 'pending' | 'priority';
     timestamp: number;
     path?: string;
 }
@@ -21,6 +22,46 @@ interface DownloadsPanelProps {
 
 export const DownloadsPanel: React.FC<DownloadsPanelProps> = ({ isOpen, onClose, onShowToast }) => {
     const [downloads, setDownloads] = useState<Download[]>([]);
+
+    // Reconcile with Backend
+    const refreshFromBackend = useCallback(async () => {
+        const data = await ApiClient.getDownloads();
+        if (data && data.history) {
+            setDownloads(prev => {
+                const refreshed = [...prev];
+                data.history.forEach((bh: any) => {
+                    const localIndex = refreshed.findIndex(ld => ld.id === bh.id);
+                    if (localIndex === -1) {
+                        // Add if missing
+                        refreshed.push({
+                            id: bh.id,
+                            filename: bh.filename,
+                            url: bh.url,
+                            size: 0,
+                            progress: 0,
+                            received: 0,
+                            status: bh.status,
+                            timestamp: bh.timestamp * 1000
+                        });
+                    } else {
+                        // Sync status if it's pending/priority (backend controlled)
+                        if (['pending', 'priority'].includes(bh.status)) {
+                            refreshed[localIndex].status = bh.status;
+                        }
+                    }
+                });
+                return refreshed;
+            });
+        }
+    }, []);
+
+    useEffect(() => {
+        if (isOpen) {
+            refreshFromBackend();
+            const interval = setInterval(refreshFromBackend, 3000);
+            return () => clearInterval(interval);
+        }
+    }, [isOpen, refreshFromBackend]);
 
     useEffect(() => {
         // Check if we're in Electron
@@ -79,7 +120,10 @@ export const DownloadsPanel: React.FC<DownloadsPanelProps> = ({ isOpen, onClose,
         // Cleanup not needed as ipcRenderer.on persists
     }, []);
 
-    const handleClearAll = () => {
+    const handleClearAll = async () => {
+        // Clear from C++ backend
+        await ApiClient.clearDownloads();
+        // Clear local state (keep only active downloads)
         setDownloads(prev => prev.filter(d => d.status === 'downloading'));
         onShowToast?.('info', 'Cleared', 'Completed downloads cleared from list.');
     };
@@ -88,12 +132,25 @@ export const DownloadsPanel: React.FC<DownloadsPanelProps> = ({ isOpen, onClose,
         setDownloads(prev => prev.filter((d) => d.id !== id));
     };
 
+    const handlePrioritize = async (id: string) => {
+        const success = await ApiClient.prioritizeDownload(id);
+        if (success) {
+            onShowToast?.('success', 'Download Prioritized', 'Moved to C++ Priority Heap.');
+            refreshFromBackend();
+        } else {
+            onShowToast?.('error', 'Priority Failed', 'Could not move to Priority Heap.');
+        }
+    };
+
     const handleCancel = async (id: string) => {
         const electronAPI = (window as any).electronAPI;
         if (electronAPI) {
             const success = await electronAPI.cancelDownload(id);
             if (success) {
                 setDownloads(prev => prev.map(d => d.id === id ? { ...d, status: 'cancelled' } : d));
+                // SYNC TO BACKEND: This frees the "Lock" if it was the active download!
+                ApiClient.completeDownload(id);
+                onShowToast?.('info', 'Download Cancelled', 'Slot freed in C++ Queue.');
             }
         }
     };
@@ -133,9 +190,17 @@ export const DownloadsPanel: React.FC<DownloadsPanelProps> = ({ isOpen, onClose,
     const getStatusIcon = (status: Download['status']) => {
         switch (status) {
             case 'downloading':
+            case 'priority':
                 return (
                     <svg className="animate-spin" viewBox="0 0 24 24" fill="none" stroke="currentColor">
                         <circle cx="12" cy="12" r="10" strokeWidth="2" strokeDasharray="60" strokeDashoffset="15" />
+                    </svg>
+                );
+            case 'pending':
+                return (
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor">
+                        <circle cx="12" cy="12" r="10" strokeWidth="2" strokeDasharray="4 4" />
+                        <path d="M12 8v4l3 3" strokeWidth="2" strokeLinecap="round" />
                     </svg>
                 );
             case 'completed':
@@ -231,15 +296,27 @@ export const DownloadsPanel: React.FC<DownloadsPanelProps> = ({ isOpen, onClose,
                                             </span>
                                         </div>
 
-                                        {download.status === 'downloading' && (
+                                        {['downloading', 'pending', 'priority'].includes(download.status) && (
                                             <>
                                                 <div className="premium-progress-container">
                                                     <div
                                                         className="premium-progress-bar"
-                                                        style={{ width: `${download.progress}%` }}
+                                                        style={{
+                                                            width: `${download.progress || (download.status === 'priority' ? 100 : 0)}%`,
+                                                            background: download.status === 'priority' ? 'linear-gradient(90deg, #facc15, #fb923c)' : undefined
+                                                        }}
                                                     />
                                                 </div>
                                                 <div className="download-actions-row">
+                                                    {download.status === 'pending' && (
+                                                        <button
+                                                            className="action-link-btn prioritize-btn"
+                                                            onClick={() => handlePrioritize(download.id)}
+                                                            style={{ color: '#facc15', fontWeight: 'bold' }}
+                                                        >
+                                                            Prioritize (Heap)
+                                                        </button>
+                                                    )}
                                                     <button className="action-link-btn cancel-btn" onClick={() => handleCancel(String(download.id))}>
                                                         Cancel
                                                     </button>

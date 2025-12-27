@@ -116,6 +116,9 @@ public:
     
     // Get number of nodes
     int size() const { return listSize; }
+    
+    // Check if list is empty
+    bool isEmpty() const { return listSize == 0; }
 
     // Remove a specific node
     // This is O(1) because we have the node pointer!

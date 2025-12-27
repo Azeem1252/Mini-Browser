@@ -46,6 +46,19 @@ export const ApiClient = {
         }
     },
 
+    deleteBookmark: async (title: string): Promise<boolean> => {
+        try {
+            const response = await fetch(`${API_BASE}/api/bookmarks?title=${encodeURIComponent(title)}`, {
+                method: 'DELETE'
+            });
+            const data = await response.json();
+            return !!data.success;
+        } catch (error) {
+            console.error('Failed to delete bookmark:', error);
+            return false;
+        }
+    },
+
     // History
     getHistory: async (): Promise<string[]> => {
         try {
@@ -54,6 +67,17 @@ export const ApiClient = {
         } catch (error) {
             console.error('Failed to fetch history:', error);
             return [];
+        }
+    },
+
+    clearHistory: async (): Promise<boolean> => {
+        try {
+            const response = await fetch(`${API_BASE}/api/history/clear`, { method: 'POST' });
+            const data = await response.json();
+            return !!data.success;
+        } catch (error) {
+            console.error('Failed to clear history:', error);
+            return false;
         }
     },
 
@@ -111,43 +135,74 @@ export const ApiClient = {
     },
 
     // Downloads
-    getDownloads: async (): Promise<any[]> => {
+    getDownloads: async (): Promise<any> => {
         try {
             const response = await fetch(`${API_BASE}/api/downloads`);
             return await response.json();
         } catch (error) {
-            console.error('Failed to fetch downloads:', error);
-            return [];
+            console.error('Failed to get downloads:', error);
+            return { history: [], pending_count: 0, priority_count: 0 };
         }
     },
 
-    addDownload: async (id: string, filename: string, url: string): Promise<boolean> => {
+    addDownload: async (id: string, filename: string, url: string): Promise<any> => {
         try {
-            const params = new URLSearchParams({ id, filename, url });
-            const response = await fetch(`${API_BASE}/api/downloads?${params.toString()}`, {
-                method: 'POST'
+            const response = await fetch(`${API_BASE}/api/downloads`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ id, filename, url })
             });
-            if (!response.ok) return false;
-            const data = await response.json();
-            return !!data.success;
+            return await response.json();
         } catch (error) {
             console.error('Failed to sync download:', error);
-            return false;
+            // Default to queue if backend is unreachable (STRICT MODE)
+            return { action: 'queue' };
         }
     },
 
-    // Undo & Session Management
-    undo: async (): Promise<boolean> => {
+    completeDownload: async (id: string): Promise<any> => {
         try {
-            const response = await fetch(`${API_BASE}/api/undo`, { method: 'POST' });
+            const response = await fetch(`${API_BASE}/api/downloads/complete`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ id })
+            });
+            return await response.json();
+        } catch (error) {
+            console.error('Failed to complete download:', error);
+            return { nextId: null };
+        }
+    },
+
+    prioritizeDownload: async (id: string): Promise<boolean> => {
+        try {
+            const response = await fetch(`${API_BASE}/api/downloads/prioritize`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ id })
+            });
             const data = await response.json();
             return !!data.success;
         } catch (error) {
-            console.error('Undo failed:', error);
+            console.error('Failed to prioritize download:', error);
             return false;
         }
     },
 
+    clearDownloads: async (): Promise<boolean> => {
+        try {
+            const response = await fetch(`${API_BASE}/api/downloads/clear`, {
+                method: 'POST'
+            });
+            const data = await response.json();
+            return !!data.success;
+        } catch (error) {
+            console.error('Failed to clear downloads:', error);
+            return false;
+        }
+    },
+
+    // Tabs
     createTab: async (): Promise<boolean> => {
         try {
             const response = await fetch(`${API_BASE}/api/tabs/new`, { method: 'POST' });
@@ -174,16 +229,15 @@ export const ApiClient = {
         }
     },
 
-    deleteBookmark: async (title: string): Promise<boolean> => {
+    // Undo
+    undo: async (): Promise<any[] | null> => {
         try {
-            const response = await fetch(`${API_BASE}/api/bookmarks?title=${encodeURIComponent(title)}`, {
-                method: 'DELETE'
-            });
-            const data = await response.json();
-            return !!data.success;
+            const response = await fetch(`${API_BASE}/api/undo`, { method: 'POST' });
+            if (!response.ok) return null;
+            return await response.json();
         } catch (error) {
-            console.error('Failed to delete bookmark:', error);
-            return false;
+            console.error('Undo failed:', error);
+            return null;
         }
     }
 };

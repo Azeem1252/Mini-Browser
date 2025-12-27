@@ -1,6 +1,7 @@
 #ifndef QUEUE_HPP
 #define QUEUE_HPP
 
+#include "DoublyLinkedList.hpp"
 #include <stdexcept>
 
 using namespace std;
@@ -8,39 +9,56 @@ using namespace std;
 template <typename T>
 class Queue {
 private:
-    struct Node {
-        T data;
-        Node* next;
-        Node(T val) : data(val), next(nullptr) {}
-    };
-    Node *front, *rear;
-    int queueSize;
+    DoublyLinkedList<T> list;
 
 public:
-    Queue() : front(nullptr), rear(nullptr), queueSize(0) {}
-    ~Queue() { while (!isEmpty()) dequeue(); }
     void enqueue(T val) {
-        Node* newNode = new Node(val);
-        if (rear == nullptr) {
-            front = rear = newNode;
-        } else {
-            rear->next = newNode;
-            rear = newNode;
-        }
-        queueSize++;
+        list.append(val);
     }
+
     T dequeue() {
-        if (isEmpty()) throw runtime_error("Queue Underflow");
-        Node* temp = front;
-        T val = temp->data;
-        front = front->next;
-        if (front == nullptr) rear = nullptr;
-        delete temp;
-        queueSize--;
+        if (isEmpty()) throw runtime_error("Queue Empty");
+        T val = list.getHead()->data;
+        list.removeNode(list.getHead());
         return val;
     }
-    bool isEmpty() const { return front == nullptr; }
-    int size() const { return queueSize; }
+
+    T peek() const {
+        if (isEmpty()) throw runtime_error("Queue Empty");
+        return list.getHead()->data;
+    }
+
+    bool isEmpty() const {
+        return list.isEmpty();
+    }
+
+    int size() const {
+        return list.size();
+    }
+    
+    // Helper to see all elements (for API)
+    vector<T> getAll() const {
+        vector<T> result;
+        auto current = list.getHead();
+        while (current) {
+            result.push_back(current->data);
+            current = current->next;
+        }
+        return result;
+    }
+
+    // Ability to remove specific item if needed (though not standard queue)
+    bool remove(T val) {
+        auto current = list.getHead();
+        while (current) {
+            if (current->data == val) {
+                list.removeNode(current);
+                return true;
+            }
+            current = current->next;
+        }
+        return false;
+    }
 };
 
 #endif

@@ -10,9 +10,11 @@
  *   data structures in a real-world application.
  * 
  * Data Structures Used:
- *   5. Queue           - Download manager
- *   6. Trie            - URL autocomplete
- *   7. Tree            - DOM (HTML structure)
+ *   1. Stack (Navigation)
+ *   2. Doubly Linked List (Tab Management & History)
+ *   3. Binary Search Tree (Bookmarks)
+ *   4. Priority Queue / Heap (Downloads)
+ *   5. Command Pattern & Undo Manager
  */
 
 #include "server/ApiServer.cpp"
@@ -31,10 +33,10 @@ int main() {
     // List the data structures
     cout << "📚 Data Structures Implemented:\n";
     cout << "   ✓ Stack (Navigation: Back/Forward)\n";
-    cout << "   ✓ Doubly Linked List (Browsing History)\n";
-    cout << "   ✓ Circular Linked List (Tab Management)\n";
+    cout << "   ✓ Doubly Linked List (Tab Management & History)\n";
     cout << "   ✓ Binary Search Tree (Bookmarks)\n";
-    cout << "   ✓ Queue (Download Manager)\n";
+    cout << "   ✓ Heap / Priority Queue (Download Manager)\n";
+    cout << "   ✓ Command Pattern (Undo Functionality)\n";
     cout << "\n";
     
     // Explain the architecture

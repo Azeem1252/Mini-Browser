@@ -12,14 +12,15 @@
 #include "../core/HistoryDoublyLinkedList.cpp"
 #include "../parser/HTMLParser.cpp"
 #include "../parser/DOMSerializer.hpp"
-#include "../core/dsa/Queue.hpp"
 #include "../core/dsa/PriorityQueue.hpp"
+#include "../core/dsa/Queue.hpp"
 #include "../core/Command.hpp"
 #include "../core/UndoManager.cpp"
 #include <iostream>
 #include <fstream>
 #include <ctime>
 #include <regex>
+#include <mutex>
 
 using namespace std;
 
@@ -32,6 +33,10 @@ struct DownloadEntry {
     string url;
     string status;
     long long timestamp;
+
+    bool operator==(const DownloadEntry& other) const {
+        return id == other.id;
+    }
 };
 
 // ==============================================
@@ -45,12 +50,15 @@ private:
     HistoryManager historyManager;
     HttpClient httpClient;
     HTMLParser htmlParser;
-    PriorityQueue<DownloadEntry> downloadQueue;
+    Queue<DownloadEntry> pendingQueue;         // Standard Queue (FIFO)
+    PriorityQueue<DownloadEntry> priorityQueue; // Priority Queue (Heap)
     vector<DownloadEntry> downloadHistory;
+    string activeDownloadId;                    // Track current active download (serial)
     UndoManager undoManager;
+    mutable mutex engineMutex;
 
 public:
-    BrowserEngine() {
+    BrowserEngine() : activeDownloadId("") {
         loadHistoryFromFile();
         loadBookmarksFromFile();
         tabManager.loadSession();
@@ -59,18 +67,87 @@ public:
     ~BrowserEngine() {
         tabManager.saveSession();
         saveHistoryToFile();
-        saveBookmarksFromFile();
+        saveBookmarksToFile();
     }
 
-    void addDownload(string id, string filename, string url, int priority = 1) {
-        DownloadEntry entry = {id, filename, url, "downloading", (long long)time(nullptr)};
-        downloadQueue.push(entry, priority);
+    string addDownload(string id, string filename, string url) {
+        lock_guard<mutex> lock(engineMutex);
+        cout << "[CORE] addDownload request: ID=" << id << " | File=" << filename << endl;
+        DownloadEntry entry = {id, filename, url, "pending", (long long)time(nullptr)};
         downloadHistory.push_back(entry);
+
+        if (activeDownloadId.empty()) {
+            activeDownloadId = id;
+            cout << "[CORE] Setting activeDownloadId=" << id << " (Slot free)" << endl;
+            // Update history status to downloading
+            for (auto& h : downloadHistory) if (h.id == id) h.status = "downloading";
+            return "{\"action\":\"start\"}";
+        } else {
+            cout << "[CORE] Quened ID=" << id << " (Slot busy by " << activeDownloadId << ")" << endl;
+            pendingQueue.enqueue(entry);
+            return "{\"action\":\"queue\"}";
+        }
+    }
+
+    string completeDownload(string id) {
+        lock_guard<mutex> lock(engineMutex);
+        cout << "[CORE] completeDownload request for ID=" << id << endl;
+        if (activeDownloadId == id) {
+            activeDownloadId = "";
+            cout << "[CORE] Freed activeDownloadId slot." << endl;
+            
+            // Sync status to history as completed (if not already failed)
+            for (auto& h : downloadHistory) {
+                if (h.id == id && h.status == "downloading") h.status = "completed";
+            }
+
+            // Pick next from Priority Heap first, then Pending Queue
+            if (!priorityQueue.isEmpty()) {
+                DownloadEntry next = priorityQueue.pop();
+                activeDownloadId = next.id;
+                for (auto& h : downloadHistory) if (h.id == next.id) h.status = "downloading";
+                return "{\"nextId\":\"" + next.id + "\"}";
+            } else if (!pendingQueue.isEmpty()) {
+                DownloadEntry next = pendingQueue.dequeue();
+                activeDownloadId = next.id;
+                cout << "[CORE] Resuming next from Queue: ID=" << activeDownloadId << endl;
+                for (auto& h : downloadHistory) if (h.id == next.id) h.status = "downloading";
+                return "{\"nextId\":\"" + next.id + "\"}";
+            }
+            cout << "[CORE] No more downloads in queue." << endl;
+        } else {
+            cout << "[CORE] WARNING: completeDownload called for non-active ID: " << id << " (Current active: " << activeDownloadId << ")" << endl;
+            // If the ID is in history but was pending, it might have been canceled
+            for (auto& h : downloadHistory) {
+                if (h.id == id) h.status = "cancelled";
+            }
+        }
+        return "{\"nextId\":null}";
+    }
+
+    string prioritizeDownload(string id) {
+        // Move from pendingQueue to priorityQueue
+        auto allPending = pendingQueue.getAll();
+        for (const auto& entry : allPending) {
+            if (entry.id == id) {
+                DownloadEntry prioritized = entry;
+                prioritized.status = "priority";
+                priorityQueue.push(prioritized, 10); // High priority
+                pendingQueue.remove(entry);
+                
+                // Update history status
+                for (auto& h : downloadHistory) {
+                    if (h.id == id) h.status = "priority";
+                }
+                return "{\"success\":true}";
+            }
+        }
+        return "{\"success\":false, \"message\":\"Not in pending queue\"}";
     }
 
     string getDownloadsJson() {
         ostringstream oss;
-        oss << "[";
+        oss << "{\"history\":[";
         for (size_t i = 0; i < downloadHistory.size(); i++) {
             oss << "{\"id\":\"" << downloadHistory[i].id 
                  << "\",\"filename\":\"" << downloadHistory[i].filename
@@ -79,8 +156,23 @@ public:
                  << "\",\"timestamp\":" << downloadHistory[i].timestamp << "}";
             if (i < downloadHistory.size() - 1) oss << ",";
         }
-        oss << "]";
+        oss << "], \"pending_count\":" << pendingQueue.size() 
+            << ", \"priority_count\":" << priorityQueue.size() << "}";
         return oss.str();
+    }
+
+    string clearDownloads() {
+        lock_guard<mutex> lock(engineMutex);
+        // Clear only completed/cancelled/failed downloads, keep active
+        vector<DownloadEntry> newHistory;
+        for (const auto& d : downloadHistory) {
+            if (d.status == "downloading" || d.status == "pending" || d.status == "priority") {
+                newHistory.push_back(d);
+            }
+        }
+        downloadHistory = newHistory;
+        cout << "[CORE] Cleared completed downloads. Remaining: " << downloadHistory.size() << endl;
+        return "{\"success\":true}";
     }
 
     Tab* getTabById(int tabId) {
@@ -168,6 +260,11 @@ public:
         saveBookmarksToFile();
         return "{\"success\":true}";
     }
+    string deleteBookmark(string title) {
+        bookmarkManager.deleteBookmark(title);
+        saveBookmarksToFile();
+        return "{\"success\":true}";
+    }
 
     void saveBookmarksToFile() {
         ofstream file("bookmarks.txt");
@@ -212,7 +309,24 @@ public:
     // For now, let's add basic undo support
     string undo() {
         undoManager.undo();
-        return "{\"success\":true}";
+        tabManager.saveSession();
+        return getTabsJson();
+    }
+
+    string getTabsJson() {
+        ostringstream oss;
+        oss << "[";
+        auto current = tabManager.getHead();
+        while (current) {
+            Tab* t = current->data;
+            oss << "{\"id\":" << t->id 
+                << ",\"title\":\"" << t->title 
+                << "\",\"url\":\"" << t->nav.getCurrentUrl() << "\"}";
+            current = current->next;
+            if (current) oss << ",";
+        }
+        oss << "]";
+        return oss.str();
     }
 
     string createNewTab() { 
@@ -236,7 +350,10 @@ public:
         oss << "{\"url\":\"" << t->nav.getCurrentUrl() << "\",\"tabId\":" << t->id << "}";
         return oss.str();
     }
-    void clearHistory() { saveHistoryToFile(); }
+    void clearHistory() { 
+        historyManager.clearHistory();
+        saveHistoryToFile(); 
+    }
 };
 
 // HELPER: Manual JSON regex extractor
@@ -286,9 +403,8 @@ void startServer() {
 
     server.Delete("/api/bookmarks", [&](const Request& req, Response& res) {
         string title = req.get_param_value("title");
-        engine.bookmarkManager.deleteBookmark(title);
-        engine.saveBookmarksFromFile();
-        res.set_content("{\"success\":true}", "application/json");
+        cout << "[API] Deleting Bookmark: " << title << endl;
+        res.set_content(engine.deleteBookmark(title), "application/json");
     });
 
     server.Get("/api/tabs/status", [&](const Request& req, Response& res) {
@@ -321,12 +437,25 @@ void startServer() {
         string id = jsonValue(req.body, "id");
         string filename = jsonValue(req.body, "filename");
         string url = jsonValue(req.body, "url");
-        engine.addDownload(id, filename, url);
-        res.set_content("{\"success\":true}", "application/json");
+        res.set_content(engine.addDownload(id, filename, url), "application/json");
+    });
+
+    server.Post("/api/downloads/complete", [&](const Request& req, Response& res) {
+        string id = jsonValue(req.body, "id");
+        res.set_content(engine.completeDownload(id), "application/json");
+    });
+
+    server.Post("/api/downloads/prioritize", [&](const Request& req, Response& res) {
+        string id = jsonValue(req.body, "id");
+        res.set_content(engine.prioritizeDownload(id), "application/json");
     });
 
     server.Get("/api/downloads", [&](const Request& req, Response& res) {
         res.set_content(engine.getDownloadsJson(), "application/json");
+    });
+
+    server.Post("/api/downloads/clear", [&](const Request& req, Response& res) {
+        res.set_content(engine.clearDownloads(), "application/json");
     });
 
     server.Post("/api/tabs/new", [&](const Request& req, Response& res) {
@@ -360,5 +489,5 @@ void startServer() {
     cout << "Backend: C++ CORE [STRICT MODE ACTIVE]" << endl;
     cout << "========================================\n" << endl;
 
-    server.listen("localhost", 8080);
+    server.listen("0.0.0.0", 8080);
 }

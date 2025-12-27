@@ -15,6 +15,7 @@ interface HistoryPanelProps {
     onClose: () => void;
     onNavigate: (url: string) => void;
     onShowToast?: (type: 'info' | 'success' | 'warning' | 'error', title: string, message: string) => void;
+    isBackendOnline: boolean;
 }
 
 export const HistoryPanel: React.FC<HistoryPanelProps> = ({
@@ -22,6 +23,7 @@ export const HistoryPanel: React.FC<HistoryPanelProps> = ({
     onClose,
     onNavigate,
     onShowToast,
+    isBackendOnline,
 }) => {
     const [history, setHistory] = useState<HistoryEntry[]>([]);
     const [searchQuery, setSearchQuery] = useState('');
@@ -52,11 +54,15 @@ export const HistoryPanel: React.FC<HistoryPanelProps> = ({
         }
     }, [isOpen, loadHistory]);
 
-    const handleClearAll = () => {
-        // TODO: Implement backend clear history
-        setHistory([]);
+    const handleClearAll = async () => {
+        const success = await ApiClient.clearHistory();
+        if (success) {
+            setHistory([]);
+            onShowToast?.('success', 'History Cleared', 'Removed from C++ Backend.');
+        } else {
+            onShowToast?.('error', 'Clear Failed', 'Could not sync with backend.');
+        }
         setShowClearConfirm(false);
-        onShowToast?.('success', 'History Cleared', 'UI cleared. Backend sync pending.');
     };
 
     const handleDelete = (id: number) => {
@@ -142,6 +148,15 @@ export const HistoryPanel: React.FC<HistoryPanelProps> = ({
                         onChange={(e) => setSearchQuery(e.target.value)}
                     />
                 </div>
+
+                {!isBackendOnline && (
+                    <div className="offline-notice">
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor">
+                            <path d="M10.29 3.86L1.82 18a2 2 0 001.71 3h16.94a2 2 0 001.71-3L13.71 3.86a2 2 0 00-3.42 0zM12 9v4M12 17h.01" strokeWidth="2" strokeLinecap="round" />
+                        </svg>
+                        <span>Backend Offline: History results may be incomplete.</span>
+                    </div>
+                )}
 
                 <div className="panel-content">
                     {Object.keys(groupedHistory).length === 0 ? (

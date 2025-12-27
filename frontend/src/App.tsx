@@ -84,6 +84,7 @@ function App() {
     const [showGame, setShowGame] = useState(false);
     const [showSessionManager, setShowSessionManager] = useState(false);
     const [toasts, setToasts] = useState<ToastMessage[]>([]);
+    const [isBackendOnline, setIsBackendOnline] = useState<boolean>(true);
 
     // Tab Groups State (uses Linked List concept for ordering)
     const [tabGroups, setTabGroups] = useState<TabGroup[]>(() => {
@@ -120,25 +121,33 @@ function App() {
 
         // Download started
         electronAPI.onDownloadStarted?.(async (data: any) => {
+            console.log('[App.tsx] DOWNLOAD EVENT RECEIVED:', data.id, data.filename);
+
             // Extra deduplication at event level
             const dedupeKey = `${data.url}::${data.filename}`;
             if (processedDownloads.current.has(dedupeKey)) {
-                console.log('[Download] Skipping duplicate event for:', data.filename);
+                console.log('[App.tsx] DUPLICATE - SKIPPING:', data.filename);
                 return;
             }
             processedDownloads.current.add(dedupeKey);
-            // Clear after 10 seconds to allow re-download
             setTimeout(() => processedDownloads.current.delete(dedupeKey), 10000);
 
-            // 1. Sync with C++ Backend
-            const success = await ApiClient.addDownload(String(data.id), data.filename, data.url);
+            // 1. Sync with C++ Backend (Serial Concurrency Control)
+            console.log('[App.tsx] Calling C++ addDownload for:', data.id);
+            const result = await ApiClient.addDownload(String(data.id), data.filename, data.url);
+            console.log('[App.tsx] C++ Response:', JSON.stringify(result));
 
-            if (success) {
-                setShowDownloads(true); // Auto-open downloads panel
-                showToast('info', 'Download Sync Status', `Downloading: ${data.filename} [Synced to C++ Backend]`);
+            if (result.action === 'queue') {
+                // Keep paused
+                console.log('[App.tsx] ACTION=QUEUE - NOT RESUMING:', data.filename);
+                showToast('info', 'Download Queued', `${data.filename} waiting in FIFO Queue.`);
             } else {
-                showToast('warning', 'Backend Offline', `Downloading: ${data.filename} [Backend NOT Synced - Local Only]`);
+                // Authorized to start
+                console.log('[App.tsx] ACTION=START - RESUMING:', data.filename);
+                await electronAPI.resumeDownload?.(String(data.id));
+                showToast('info', 'Download Started', `${data.filename} is starting.`);
             }
+            setShowDownloads(true);
         });
 
         // Download progress
@@ -147,8 +156,15 @@ function App() {
         });
 
         // Download completed
-        electronAPI.onDownloadCompleted?.((data: any) => {
+        electronAPI.onDownloadCompleted?.(async (data: any) => {
             showToast('success', 'Download Complete', `${data.filename} is ready!`);
+
+            // Tell backend this specific ID is done, and get the next one to start
+            const completeRes = await ApiClient.completeDownload(String(data.id));
+            if (completeRes && completeRes.nextId) {
+                await electronAPI.resumeDownload?.(String(completeRes.nextId));
+                showToast('info', 'Next Download Starting', `Resuming queued task: ${completeRes.nextId}`);
+            }
         });
 
         // Download failed
@@ -159,6 +175,25 @@ function App() {
         });
     }, [showToast]);
 
+    // Backend Health Polling
+    useEffect(() => {
+        const checkHealth = async () => {
+            const online = await ApiClient.checkHealth();
+            if (online !== isBackendOnline) {
+                setIsBackendOnline(online);
+                if (!online) {
+                    showToast('warning', 'Backend Connection Lost', 'Some features (Bookmarks, Undo, Persistence) may be unavailable.');
+                } else {
+                    showToast('success', 'Backend Connected', 'Core engine is online.');
+                }
+            }
+        };
+
+        checkHealth();
+        const interval = setInterval(checkHealth, 5000);
+        return () => clearInterval(interval);
+    }, [isBackendOnline, showToast]);
+
     // Webview refs for direct control
     const webviewRefs = useRef<Map<number, any>>(new Map());
 
@@ -168,21 +203,43 @@ function App() {
         document.documentElement.setAttribute('data-theme', savedTheme);
 
         // Add Global Undo Listener (Ctrl+Z)
-        const handleUndoShortcut = (e: KeyboardEvent) => {
+        const handleUndoShortcut = async (e: KeyboardEvent) => {
             if (e.ctrlKey && e.key.toLowerCase() === 'z') {
-                ApiClient.undo().then(success => {
-                    if (success) {
-                        showToast('info', 'Undo Action', 'Restoring last closed tab...');
-                        // In a production app, we'd fetch the full tab state here.
-                        // For this project, we notify the user that the backend restored it.
-                    }
-                });
+                if (!isBackendOnline) {
+                    showToast('error', 'Cannot Undo', 'C++ Backend is offline.');
+                    return;
+                }
+                const restoredTabsData = await ApiClient.undo();
+                if (restoredTabsData && Array.isArray(restoredTabsData)) {
+                    showToast('info', 'Undo Action', 'Restoring last closed tab...');
+
+                    // Map backend tab data to frontend TabState
+                    const updatedTabs: TabState[] = restoredTabsData.map(bt => ({
+                        id: bt.id,
+                        title: bt.title,
+                        url: bt.url,
+                        isLoading: false,
+                        canGoBack: false,
+                        canGoForward: false,
+                        navigationHistory: [bt.url],
+                        currentHistoryIndex: 0
+                    }));
+
+                    setBrowserState(prev => {
+                        // Keep current active tab if it's still there, otherwise pick first from backend
+                        const activeExists = updatedTabs.some(t => t.id === prev.activeTabId);
+                        return {
+                            tabs: updatedTabs,
+                            activeTabId: activeExists ? prev.activeTabId : updatedTabs[0]?.id || prev.activeTabId
+                        };
+                    });
+                }
             }
         };
 
         window.addEventListener('keydown', handleUndoShortcut);
         return () => window.removeEventListener('keydown', handleUndoShortcut);
-    }, [showToast]);
+    }, [showToast, isBackendOnline]);
 
     // Note: Navigation state is now managed per-tab in the frontend
     // No need for backend polling
@@ -835,6 +892,7 @@ function App() {
                     zoomLevel={zoomLevel}
                     isSecure={activeTab?.url?.startsWith('https://') || false}
                     connectionInfo={{ protocol: 'https' }}
+                    isBackendOnline={isBackendOnline}
                 />
             </div>
 
@@ -844,6 +902,7 @@ function App() {
                 onClose={() => setShowBookmarks(false)}
                 onNavigate={(url) => handleNavigate(url, activeTabId)}
                 onShowToast={showToast}
+                isBackendOnline={isBackendOnline}
             />
 
             <HistoryPanel
@@ -851,6 +910,7 @@ function App() {
                 onClose={() => setShowHistory(false)}
                 onNavigate={(url) => handleNavigate(url, activeTabId)}
                 onShowToast={showToast}
+                isBackendOnline={isBackendOnline}
             />
 
             <SettingsPanel

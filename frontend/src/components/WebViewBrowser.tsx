@@ -127,7 +127,7 @@ export const WebViewBrowser = forwardRef<any, WebViewBrowserProps>(({
             ref={webviewRef}
             id={`webview-${tabId}`}
             src={url === 'about:blank' ? 'about:blank' : url}
-            partition="browser"
+            partition="persist:browser"
             allowpopups={true}
             style={{
                 width: '100%',

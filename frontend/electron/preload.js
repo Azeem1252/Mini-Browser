@@ -65,6 +65,8 @@ contextBridge.exposeInMainWorld('electronAPI', {
     openDownload: (filePath) => ipcRenderer.invoke('open-download', filePath),
     showInFolder: (filePath) => ipcRenderer.invoke('show-in-folder', filePath),
     cancelDownload: (id) => ipcRenderer.invoke('cancel-download', id),
+    pauseDownload: (id) => ipcRenderer.invoke('pause-download', id),
+    resumeDownload: (id) => ipcRenderer.invoke('resume-download', id),
 
     // Platform info
     platform: process.platform,

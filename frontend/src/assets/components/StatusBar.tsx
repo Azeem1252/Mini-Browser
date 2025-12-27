@@ -17,6 +17,7 @@ interface StatusBarProps {
         charset?: string;
         contentType?: string;
     };
+    isBackendOnline: boolean;
 }
 
 export const StatusBar: React.FC<StatusBarProps> = ({
@@ -27,6 +28,7 @@ export const StatusBar: React.FC<StatusBarProps> = ({
     isSecure: _isSecure,
     connectionInfo,
     pageInfo,
+    isBackendOnline,
 }) => {
     const getSecurityStatus = () => {
         if (!url || url === 'about:blank') return { icon: 'home', text: 'Home', color: 'neutral' };
@@ -105,6 +107,12 @@ export const StatusBar: React.FC<StatusBarProps> = ({
             </div>
 
             <div className="status-bar-center">
+                {/* Backend Status Indicator */}
+                <div className={`status-item backend-status ${isBackendOnline ? 'online' : 'offline'}`}>
+                    <div className="status-dot" />
+                    <span className="status-text">Backend: {isBackendOnline ? 'Online' : 'Offline'}</span>
+                </div>
+
                 {/* Connection info */}
                 {connectionInfo && connectionInfo.responseTime && (
                     <div className="status-item connection-info">

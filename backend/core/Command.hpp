@@ -9,7 +9,7 @@ using namespace std;
 // Forward declaration of BrowserEngine or managers if needed
 // For now, let's assume commands will take necessary pointers
 
-#include "../core/TabManagerDoublyLinkedList.cpp"
+#include "TabManagerDoublyLinkedList.cpp"
 
 class Command {
 public:
@@ -56,7 +56,7 @@ public:
         data.url = url;
     }
     void execute() override {
-        tabManager->closeCurrentTab();
+        tabManager->closeTabById(data.id);
     }
     void undo() override {
         tabManager->restoreTab(data.id, data.title, data.url);

@@ -1,6 +1,1 @@
-Google|https://google.com
-Google Search|https://www.google.com/search?q=kitabnugar
-Pir e Kamil By Umera Ahmed|https://www.mediafire.com/file/cxrxbemap59etis/Pir+e+Kamil+By+Umera+Ahmed.pdf
-Reddit - The heart of the internet|https://www.reddit.com/
-Test|https://test.com
-YouTube|https://www.youtube.com/
+r/popular|https://www.reddit.com/r/popular/
