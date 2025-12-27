@@ -1,0 +1,187 @@
+.browser-view {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    background: var(--bg-primary);
+    overflow: hidden;
+    position: relative;
+    /* Ensure we can position things if needed */
+}
+
+.browser-frame {
+    flex: 1;
+    width: 100%;
+    height: 100%;
+    border: none;
+    background: white;
+    /* Most sites assume white background */
+}
+
+.page-content {
+    flex: 1;
+    overflow: auto;
+    padding: var(--spacing-lg);
+}
+
+.rendered-content {
+    max-width: 1200px;
+    margin: 0 auto;
+    color: var(--text-primary);
+    line-height: 1.6;
+}
+
+.rendered-content h1,
+.rendered-content h2,
+.rendered-content h3,
+.rendered-content h4,
+.rendered-content h5,
+.rendered-content h6 {
+    margin-top: var(--spacing-lg);
+    margin-bottom: var(--spacing-md);
+    color: var(--text-primary);
+}
+
+.rendered-content p {
+    margin-bottom: var(--spacing-md);
+}
+
+.rendered-content a {
+    color: var(--accent-primary);
+    text-decoration: underline;
+}
+
+.rendered-content a:hover {
+    color: var(--accent-primary-hover);
+}
+
+.rendered-content img {
+    max-width: 100%;
+    height: auto;
+    border-radius: var(--radius-md);
+}
+
+.empty-content {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    height: 100%;
+    color: var(--text-tertiary);
+}
+
+/* Welcome Page */
+.welcome-page {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    height: 100%;
+    animation: fadeIn var(--transition-slow);
+}
+
+.welcome-content {
+    text-align: center;
+    max-width: 500px;
+}
+
+.welcome-icon {
+    width: 120px;
+    height: 120px;
+    margin: 0 auto var(--spacing-xl);
+    color: var(--accent-primary);
+    opacity: 0.8;
+}
+
+.welcome-icon svg {
+    width: 100%;
+    height: 100%;
+    filter: drop-shadow(0 0 20px rgba(99, 102, 241, 0.3));
+}
+
+.welcome-title {
+    font-size: 2.5rem;
+    font-weight: 700;
+    background: var(--accent-gradient);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+    margin-bottom: var(--spacing-md);
+}
+
+.welcome-subtitle {
+    font-size: var(--font-size-lg);
+    color: var(--text-secondary);
+}
+
+/* Loading Page */
+.loading-page {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    height: 100%;
+    gap: var(--spacing-lg);
+    animation: fadeIn var(--transition-base);
+}
+
+.loading-spinner {
+    width: 60px;
+    height: 60px;
+    color: var(--accent-primary);
+}
+
+.loading-spinner svg {
+    width: 100%;
+    height: 100%;
+}
+
+.loading-text {
+    font-size: var(--font-size-lg);
+    color: var(--text-secondary);
+}
+
+/* Error Page */
+.error-page {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    height: 100%;
+    gap: var(--spacing-md);
+    padding: var(--spacing-xl);
+    text-align: center;
+    animation: fadeIn var(--transition-base);
+}
+
+.error-icon {
+    width: 80px;
+    height: 80px;
+    color: var(--error);
+    margin-bottom: var(--spacing-md);
+}
+
+.error-icon svg {
+    width: 100%;
+    height: 100%;
+}
+
+.error-title {
+    font-size: 2rem;
+    font-weight: 600;
+    color: var(--text-primary);
+    margin-bottom: var(--spacing-sm);
+}
+
+.error-message {
+    font-size: var(--font-size-lg);
+    color: var(--text-secondary);
+    max-width: 600px;
+}
+
+.error-url {
+    font-size: var(--font-size-sm);
+    color: var(--text-tertiary);
+    font-family: monospace;
+    background: var(--bg-secondary);
+    padding: var(--spacing-sm) var(--spacing-md);
+    border-radius: var(--radius-md);
+    margin-top: var(--spacing-md);
+}

@@ -1,0 +1,133 @@
+.qr-overlay {
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: rgba(0, 0, 0, 0.6);
+    backdrop-filter: blur(8px);
+    z-index: 2000;
+    animation: fadeIn var(--transition-base);
+}
+
+.qr-modal {
+    position: fixed;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    width: 90%;
+    max-width: 400px;
+    background: var(--glass-bg);
+    backdrop-filter: blur(20px);
+    border: 1px solid var(--glass-border);
+    border-radius: var(--radius-xl);
+    box-shadow: var(--shadow-xl);
+    z-index: 2001;
+    overflow: hidden;
+    animation: scaleIn var(--transition-base);
+}
+
+.qr-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: var(--spacing-lg);
+    border-bottom: 1px solid var(--divider);
+}
+
+.qr-header h2 {
+    font-size: var(--font-size-xl);
+    font-weight: 600;
+    color: var(--text-primary);
+}
+
+.qr-close {
+    width: 32px;
+    height: 32px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: var(--radius-md);
+    transition: all var(--transition-base);
+}
+
+.qr-close:hover {
+    background: var(--bg-elevated);
+}
+
+.qr-close svg {
+    width: 20px;
+    height: 20px;
+    color: var(--text-secondary);
+}
+
+.qr-content {
+    padding: var(--spacing-xl);
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: var(--spacing-lg);
+}
+
+.qr-canvas-container {
+    padding: var(--spacing-lg);
+    background: white;
+    border-radius: var(--radius-lg);
+    box-shadow: var(--shadow-md);
+}
+
+.qr-canvas {
+    display: block;
+    border-radius: var(--radius-sm);
+}
+
+.qr-url {
+    font-size: var(--font-size-sm);
+    color: var(--text-secondary);
+    text-align: center;
+    word-break: break-all;
+    max-width: 100%;
+}
+
+.qr-actions {
+    display: flex;
+    gap: var(--spacing-sm);
+    padding: var(--spacing-lg);
+    border-top: 1px solid var(--divider);
+}
+
+.qr-button {
+    flex: 1;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: var(--spacing-sm);
+    padding: var(--spacing-md);
+    background: var(--bg-elevated);
+    border: 1px solid var(--border-color);
+    border-radius: var(--radius-md);
+    font-size: var(--font-size-sm);
+    font-weight: 500;
+    color: var(--text-primary);
+    transition: all var(--transition-base);
+}
+
+.qr-button:hover {
+    background: var(--bg-tertiary);
+    transform: translateY(-1px);
+}
+
+.qr-button.primary {
+    background: var(--accent-gradient);
+    border-color: var(--accent-primary);
+    color: white;
+}
+
+.qr-button.primary:hover {
+    filter: brightness(1.1);
+}
+
+.qr-button svg {
+    width: 18px;
+    height: 18px;
+}

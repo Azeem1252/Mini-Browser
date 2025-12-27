@@ -1,0 +1,42 @@
+.navigation-controls {
+    display: flex;
+    align-items: center;
+    gap: var(--spacing-xs);
+    padding: 0 var(--spacing-sm);
+}
+
+.nav-button {
+    width: 36px;
+    height: 36px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: var(--radius-md);
+    background: transparent;
+    transition: all var(--transition-base);
+    cursor: pointer;
+}
+
+.nav-button:hover:not(:disabled) {
+    background: var(--bg-elevated);
+}
+
+.nav-button:active:not(:disabled) {
+    transform: scale(0.95);
+}
+
+.nav-button svg {
+    width: 20px;
+    height: 20px;
+    color: var(--text-secondary);
+    transition: color var(--transition-base);
+}
+
+.nav-button:hover:not(:disabled) svg {
+    color: var(--text-primary);
+}
+
+.nav-button:disabled {
+    opacity: 0.3;
+    cursor: not-allowed;
+}

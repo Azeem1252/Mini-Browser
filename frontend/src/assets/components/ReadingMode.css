@@ -1,0 +1,310 @@
+.reading-mode-overlay {
+    position: fixed;
+    inset: 0;
+    z-index: 1000;
+    overflow-y: auto;
+    transition: background-color var(--transition-slow);
+}
+
+/* Progress bar */
+.reading-progress {
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    height: 3px;
+    background: rgba(0, 0, 0, 0.1);
+    z-index: 1001;
+}
+
+.reading-progress-bar {
+    height: 100%;
+    background: var(--accent-gradient);
+    transition: width 0.1s ease-out;
+}
+
+/* Header */
+.reading-header {
+    position: sticky;
+    top: 0;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: var(--spacing-md) var(--spacing-xl);
+    background: inherit;
+    border-bottom: 1px solid rgba(0, 0, 0, 0.1);
+    z-index: 100;
+    backdrop-filter: blur(10px);
+}
+
+.reading-header-left,
+.reading-header-center,
+.reading-header-right {
+    display: flex;
+    align-items: center;
+    gap: var(--spacing-md);
+}
+
+.reading-close {
+    display: flex;
+    align-items: center;
+    gap: var(--spacing-sm);
+    padding: var(--spacing-sm) var(--spacing-md);
+    border-radius: var(--radius-md);
+    background: rgba(0, 0, 0, 0.05);
+    color: inherit;
+    font-size: var(--font-size-sm);
+    transition: background var(--transition-fast);
+}
+
+.reading-close:hover {
+    background: rgba(0, 0, 0, 0.1);
+}
+
+.reading-close svg {
+    width: 18px;
+    height: 18px;
+}
+
+.reading-time {
+    display: flex;
+    align-items: center;
+    gap: var(--spacing-xs);
+    color: inherit;
+    opacity: 0.7;
+    font-size: var(--font-size-sm);
+}
+
+.reading-time svg {
+    width: 16px;
+    height: 16px;
+}
+
+.reading-settings-toggle {
+    width: 40px;
+    height: 40px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: var(--radius-md);
+    background: rgba(0, 0, 0, 0.05);
+    color: inherit;
+    transition: background var(--transition-fast);
+}
+
+.reading-settings-toggle:hover {
+    background: rgba(0, 0, 0, 0.1);
+}
+
+.reading-settings-toggle svg {
+    width: 20px;
+    height: 20px;
+}
+
+/* Controls panel */
+.reading-controls {
+    position: sticky;
+    top: 60px;
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: center;
+    gap: var(--spacing-lg);
+    padding: var(--spacing-md) var(--spacing-xl);
+    background: inherit;
+    border-bottom: 1px solid rgba(0, 0, 0, 0.1);
+    z-index: 99;
+}
+
+.control-group {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: var(--spacing-xs);
+}
+
+.control-group label {
+    font-size: var(--font-size-xs);
+    opacity: 0.6;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+}
+
+.control-buttons {
+    display: flex;
+    align-items: center;
+    gap: var(--spacing-xs);
+}
+
+.control-buttons button {
+    width: 36px;
+    height: 36px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: var(--radius-md);
+    background: rgba(0, 0, 0, 0.05);
+    color: inherit;
+    font-weight: 500;
+    transition: all var(--transition-fast);
+}
+
+.control-buttons button:hover {
+    background: rgba(0, 0, 0, 0.1);
+}
+
+.control-buttons button.active {
+    background: var(--accent-primary);
+    color: white;
+}
+
+.control-buttons span {
+    min-width: 50px;
+    text-align: center;
+    font-size: var(--font-size-sm);
+}
+
+.font-select button {
+    font-size: 16px;
+}
+
+.theme-select .theme-btn {
+    width: 40px;
+    height: 40px;
+    border: 2px solid transparent;
+    font-size: 18px;
+    font-weight: 600;
+}
+
+.theme-select .theme-btn.active {
+    border-color: var(--accent-primary);
+}
+
+.control-group input[type="range"] {
+    width: 120px;
+    cursor: pointer;
+}
+
+/* Content */
+.reading-content {
+    max-width: 720px;
+    margin: 0 auto;
+    padding: var(--spacing-xl) var(--spacing-lg);
+    padding-bottom: 100px;
+}
+
+.reading-title {
+    font-size: 2.5em;
+    font-weight: 700;
+    line-height: 1.2;
+    margin-bottom: var(--spacing-md);
+}
+
+.reading-meta {
+    margin-bottom: var(--spacing-xl);
+    padding-bottom: var(--spacing-lg);
+    border-bottom: 1px solid rgba(0, 0, 0, 0.1);
+}
+
+.reading-meta a {
+    color: inherit;
+    opacity: 0.6;
+    text-decoration: none;
+    font-size: 0.9em;
+}
+
+.reading-meta a:hover {
+    opacity: 1;
+    text-decoration: underline;
+}
+
+.reading-body {
+    word-wrap: break-word;
+}
+
+.reading-body h1,
+.reading-body h2,
+.reading-body h3,
+.reading-body h4,
+.reading-body h5,
+.reading-body h6 {
+    margin-top: 1.5em;
+    margin-bottom: 0.5em;
+    line-height: 1.3;
+}
+
+.reading-body p {
+    margin-bottom: 1em;
+}
+
+.reading-body img {
+    max-width: 100%;
+    height: auto;
+    border-radius: var(--radius-md);
+    margin: var(--spacing-lg) 0;
+}
+
+.reading-body a {
+    color: var(--accent-primary);
+    text-decoration: underline;
+}
+
+.reading-body blockquote {
+    margin: var(--spacing-lg) 0;
+    padding: var(--spacing-md) var(--spacing-lg);
+    border-left: 4px solid var(--accent-primary);
+    background: rgba(0, 0, 0, 0.03);
+    font-style: italic;
+}
+
+.reading-body pre,
+.reading-body code {
+    font-family: 'JetBrains Mono', 'Fira Code', monospace;
+    font-size: 0.9em;
+}
+
+.reading-body pre {
+    padding: var(--spacing-md);
+    background: rgba(0, 0, 0, 0.05);
+    border-radius: var(--radius-md);
+    overflow-x: auto;
+}
+
+.reading-body code {
+    padding: 0.1em 0.3em;
+    background: rgba(0, 0, 0, 0.05);
+    border-radius: var(--radius-sm);
+}
+
+.reading-body ul,
+.reading-body ol {
+    margin: var(--spacing-md) 0;
+    padding-left: var(--spacing-xl);
+}
+
+.reading-body li {
+    margin-bottom: 0.5em;
+}
+
+/* Responsive */
+@media (max-width: 768px) {
+    .reading-header {
+        padding: var(--spacing-sm) var(--spacing-md);
+    }
+
+    .reading-close span {
+        display: none;
+    }
+
+    .reading-controls {
+        gap: var(--spacing-md);
+        padding: var(--spacing-sm) var(--spacing-md);
+    }
+
+    .reading-content {
+        padding: var(--spacing-md);
+    }
+
+    .reading-title {
+        font-size: 1.75em;
+    }
+}

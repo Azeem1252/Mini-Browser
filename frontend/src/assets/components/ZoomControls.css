@@ -1,0 +1,52 @@
+.zoom-controls {
+    display: flex;
+    align-items: center;
+    gap: var(--spacing-xs);
+    padding: 0 var(--spacing-sm);
+    border-left: 1px solid var(--divider);
+}
+
+.zoom-button {
+    width: 28px;
+    height: 28px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: var(--radius-sm);
+    transition: all var(--transition-base);
+}
+
+.zoom-button:hover:not(:disabled) {
+    background: var(--bg-elevated);
+}
+
+.zoom-button:disabled {
+    opacity: 0.3;
+}
+
+.zoom-button svg {
+    width: 16px;
+    height: 16px;
+    color: var(--text-secondary);
+}
+
+.zoom-button:hover:not(:disabled) svg {
+    color: var(--text-primary);
+}
+
+.zoom-display {
+    min-width: 50px;
+    padding: var(--spacing-xs) var(--spacing-sm);
+    font-size: var(--font-size-xs);
+    font-weight: 500;
+    color: var(--text-secondary);
+    background: var(--bg-tertiary);
+    border-radius: var(--radius-sm);
+    text-align: center;
+    transition: all var(--transition-base);
+}
+
+.zoom-display:hover {
+    background: var(--bg-elevated);
+    color: var(--text-primary);
+}

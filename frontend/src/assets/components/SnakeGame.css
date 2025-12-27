@@ -1,0 +1,314 @@
+.snake-overlay {
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: rgba(0, 0, 0, 0.85);
+    backdrop-filter: blur(12px);
+    z-index: 2000;
+}
+
+.snake-modal {
+    position: fixed;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    background: linear-gradient(135deg, rgba(10, 20, 15, 0.95) 0%, rgba(20, 40, 30, 0.95) 100%);
+    backdrop-filter: blur(20px);
+    border: 1px solid rgba(76, 175, 80, 0.3);
+    border-radius: 24px;
+    box-shadow: 0 25px 80px rgba(0, 0, 0, 0.5), 0 0 40px rgba(76, 175, 80, 0.15);
+    z-index: 2001;
+    overflow: hidden;
+    animation: modalSlideIn 0.3s ease-out;
+}
+
+@keyframes modalSlideIn {
+    from {
+        opacity: 0;
+        transform: translate(-50%, -50%) scale(0.9);
+    }
+
+    to {
+        opacity: 1;
+        transform: translate(-50%, -50%) scale(1);
+    }
+}
+
+.snake-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 20px 24px;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+    background: rgba(0, 0, 0, 0.2);
+}
+
+.snake-header h2 {
+    font-size: 24px;
+    font-weight: 700;
+    color: #fff;
+    margin: 0;
+}
+
+.snake-high-score {
+    background: linear-gradient(135deg, #FFD700, #FFA500);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+    font-size: 18px;
+    font-weight: 700;
+}
+
+.snake-close {
+    width: 36px;
+    height: 36px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: 10px;
+    background: rgba(255, 255, 255, 0.05);
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    transition: all 0.2s ease;
+}
+
+.snake-close:hover {
+    background: rgba(239, 68, 68, 0.2);
+    border-color: rgba(239, 68, 68, 0.4);
+}
+
+.snake-close svg {
+    width: 20px;
+    height: 20px;
+    color: #fff;
+}
+
+.snake-content {
+    padding: 24px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+}
+
+.snake-canvas {
+    border-radius: 16px;
+    box-shadow: 0 10px 40px rgba(0, 0, 0, 0.5), inset 0 0 60px rgba(76, 175, 80, 0.1);
+}
+
+.snake-start,
+.snake-over {
+    text-align: center;
+    padding: 25px 35px;
+}
+
+.snake-icon,
+.snake-over-icon {
+    font-size: 64px;
+    margin-bottom: 14px;
+    animation: snakeWiggle 2s ease-in-out infinite;
+}
+
+@keyframes snakeWiggle {
+
+    0%,
+    100% {
+        transform: rotate(-8deg) scale(1);
+    }
+
+    50% {
+        transform: rotate(8deg) scale(1.05);
+    }
+}
+
+.snake-start h3,
+.snake-over h3 {
+    font-size: 26px;
+    font-weight: 700;
+    color: #fff;
+    margin-bottom: 10px;
+}
+
+.snake-start p {
+    color: rgba(255, 255, 255, 0.7);
+    font-size: 15px;
+    margin-bottom: 6px;
+}
+
+.snake-controls-hint {
+    font-size: 13px !important;
+    color: rgba(255, 255, 255, 0.4) !important;
+    margin-bottom: 16px !important;
+}
+
+.snake-mode-select {
+    margin: 20px 0;
+}
+
+.snake-mode-select label {
+    display: block;
+    font-size: 12px;
+    color: rgba(255, 255, 255, 0.5);
+    text-transform: uppercase;
+    letter-spacing: 1px;
+    margin-bottom: 10px;
+}
+
+.snake-modes {
+    display: flex;
+    gap: 10px;
+    justify-content: center;
+}
+
+.mode-btn {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 3px;
+    padding: 12px 16px;
+    background: rgba(255, 255, 255, 0.05);
+    border: 2px solid rgba(255, 255, 255, 0.1);
+    border-radius: 12px;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    min-width: 90px;
+}
+
+.mode-btn:hover {
+    background: rgba(76, 175, 80, 0.1);
+    border-color: rgba(76, 175, 80, 0.3);
+    transform: translateY(-2px);
+}
+
+.mode-btn.active {
+    background: linear-gradient(135deg, rgba(76, 175, 80, 0.2), rgba(46, 125, 50, 0.2));
+    border-color: #4CAF50;
+}
+
+.mode-icon {
+    font-size: 22px;
+}
+
+.mode-name {
+    font-size: 13px;
+    font-weight: 600;
+    color: #fff;
+}
+
+.mode-desc {
+    font-size: 10px;
+    color: rgba(255, 255, 255, 0.5);
+}
+
+.snake-food-info {
+    display: flex;
+    gap: 16px;
+    justify-content: center;
+    margin: 16px 0 8px;
+}
+
+.snake-food-info span {
+    font-size: 14px;
+    color: rgba(255, 255, 255, 0.7);
+    padding: 6px 12px;
+    background: rgba(0, 0, 0, 0.2);
+    border-radius: 8px;
+}
+
+.snake-powerup-info {
+    display: flex;
+    gap: 12px;
+    justify-content: center;
+    margin: 8px 0 16px;
+    flex-wrap: wrap;
+}
+
+.snake-powerup-info span {
+    font-size: 12px;
+    color: rgba(255, 255, 255, 0.5);
+}
+
+.snake-final-score {
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+    margin: 20px 0;
+}
+
+.snake-final-score .score-value {
+    font-size: 52px;
+    font-weight: 700;
+    background: linear-gradient(135deg, #4CAF50, #81C784);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+}
+
+.snake-final-score .score-label {
+    font-size: 13px;
+    color: rgba(255, 255, 255, 0.5);
+    text-transform: uppercase;
+    letter-spacing: 2px;
+}
+
+.snake-stats {
+    display: flex;
+    gap: 24px;
+    justify-content: center;
+    margin-bottom: 16px;
+    color: rgba(255, 255, 255, 0.6);
+    font-size: 14px;
+}
+
+.snake-new-high {
+    font-size: 18px;
+    color: #FFD700;
+    animation: glow 1s ease-in-out infinite alternate;
+    margin-bottom: 12px;
+}
+
+@keyframes glow {
+    from {
+        text-shadow: 0 0 10px #FFD700;
+    }
+
+    to {
+        text-shadow: 0 0 20px #FFD700, 0 0 30px #FFA500;
+    }
+}
+
+.snake-button {
+    margin-top: 12px;
+    padding: 14px 36px;
+    background: linear-gradient(135deg, #4CAF50 0%, #81C784 100%);
+    border: none;
+    border-radius: 12px;
+    font-size: 17px;
+    font-weight: 700;
+    color: #fff;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    box-shadow: 0 4px 20px rgba(76, 175, 80, 0.4);
+}
+
+.snake-button:hover {
+    transform: translateY(-3px);
+    box-shadow: 0 8px 30px rgba(76, 175, 80, 0.6);
+}
+
+.snake-button:active {
+    transform: translateY(-1px);
+}
+
+/* Legacy */
+.snake-score {
+    font-size: 32px;
+    font-weight: 700;
+    color: #4CAF50;
+    margin: 16px 0;
+}
+
+.snake-highscore {
+    color: rgba(255, 255, 255, 0.6);
+    margin: 8px 0;
+}

@@ -1,0 +1,131 @@
+.status-bar {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    height: 24px;
+    padding: 0 var(--spacing-md);
+    background: var(--bg-secondary);
+    border-top: 1px solid var(--border-subtle);
+    font-size: var(--font-size-xs);
+    color: var(--text-secondary);
+    user-select: none;
+}
+
+.status-bar-left,
+.status-bar-center,
+.status-bar-right {
+    display: flex;
+    align-items: center;
+    gap: var(--spacing-md);
+}
+
+.status-bar-left {
+    flex: 1;
+}
+
+.status-bar-right {
+    flex: 1;
+    justify-content: flex-end;
+}
+
+.status-item {
+    display: flex;
+    align-items: center;
+    gap: var(--spacing-xs);
+    padding: 2px var(--spacing-sm);
+    border-radius: var(--radius-sm);
+    transition: background var(--transition-fast);
+}
+
+.status-item:hover {
+    background: var(--bg-elevated);
+}
+
+.status-item svg {
+    width: 12px;
+    height: 12px;
+    flex-shrink: 0;
+}
+
+.status-text {
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    max-width: 200px;
+}
+
+/* Security status colors */
+.security-status.success {
+    color: var(--success);
+}
+
+.security-status.warning {
+    color: var(--warning);
+}
+
+.security-status.error {
+    color: var(--error);
+}
+
+.security-status.neutral {
+    color: var(--text-tertiary);
+}
+
+/* Loading animation */
+.loading-status svg.spin {
+    animation: spin 1s linear infinite;
+}
+
+@keyframes spin {
+    from {
+        transform: rotate(0deg);
+    }
+    to {
+        transform: rotate(360deg);
+    }
+}
+
+/* URL display */
+.url-display {
+    opacity: 0.7;
+}
+
+.url-display .url-text {
+    max-width: 300px;
+}
+
+/* Zoom indicator */
+.zoom-indicator {
+    background: var(--accent-primary);
+    color: white;
+    font-weight: 500;
+}
+
+.zoom-indicator:hover {
+    background: var(--accent-primary-hover);
+}
+
+/* Connection info */
+.connection-info {
+    color: var(--success);
+}
+
+/* Charset info */
+.charset-info,
+.line-ending {
+    color: var(--text-tertiary);
+    font-family: monospace;
+}
+
+/* Responsive */
+@media (max-width: 768px) {
+    .status-bar-center,
+    .charset-info,
+    .line-ending {
+        display: none;
+    }
+
+    .url-display .url-text {
+        max-width: 150px;
+    }
+}

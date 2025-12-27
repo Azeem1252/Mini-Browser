@@ -1,0 +1,255 @@
+.pip-window {
+    position: fixed;
+    z-index: 1000;
+    background: var(--bg-secondary);
+    border-radius: var(--radius-lg);
+    box-shadow: var(--shadow-xl);
+    border: 1px solid var(--border-color);
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
+    min-width: 280px;
+    min-height: 200px;
+}
+
+.pip-window.maximized {
+    border-radius: 0;
+    border: none;
+}
+
+.pip-window.minimized {
+    min-height: auto;
+    border-radius: var(--radius-md);
+}
+
+/* Header */
+.pip-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: var(--spacing-xs) var(--spacing-sm);
+    background: var(--bg-tertiary);
+    cursor: grab;
+    user-select: none;
+}
+
+.pip-header:active {
+    cursor: grabbing;
+}
+
+.pip-title {
+    display: flex;
+    align-items: center;
+    gap: var(--spacing-xs);
+    color: var(--text-primary);
+    font-size: var(--font-size-sm);
+    font-weight: 500;
+}
+
+.pip-title svg {
+    width: 16px;
+    height: 16px;
+    color: var(--accent-primary);
+}
+
+.pip-title span {
+    max-width: 150px;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+.pip-controls {
+    display: flex;
+    align-items: center;
+    gap: var(--spacing-xs);
+}
+
+.pip-snap-controls {
+    display: flex;
+    gap: 2px;
+    padding: 2px;
+    background: var(--bg-elevated);
+    border-radius: var(--radius-sm);
+    margin-right: var(--spacing-sm);
+}
+
+.pip-snap-controls button {
+    width: 20px;
+    height: 20px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: 2px;
+    background: transparent;
+    color: var(--text-tertiary);
+    transition: all var(--transition-fast);
+}
+
+.pip-snap-controls button:hover {
+    background: var(--bg-tertiary);
+    color: var(--text-primary);
+}
+
+.pip-snap-controls button svg {
+    width: 12px;
+    height: 12px;
+}
+
+.pip-control {
+    width: 24px;
+    height: 24px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: var(--radius-sm);
+    background: transparent;
+    color: var(--text-secondary);
+    transition: all var(--transition-fast);
+}
+
+.pip-control:hover {
+    background: var(--bg-elevated);
+}
+
+.pip-control svg {
+    width: 14px;
+    height: 14px;
+}
+
+.pip-control.minimize:hover {
+    background: var(--warning);
+    color: white;
+}
+
+.pip-control.maximize:hover {
+    background: var(--success);
+    color: white;
+}
+
+.pip-control.close:hover {
+    background: var(--error);
+    color: white;
+}
+
+/* URL bar */
+.pip-url-bar {
+    display: flex;
+    align-items: center;
+    padding: var(--spacing-xs) var(--spacing-sm);
+    background: var(--bg-primary);
+    border-bottom: 1px solid var(--border-subtle);
+}
+
+.pip-url {
+    flex: 1;
+    font-size: var(--font-size-xs);
+    color: var(--text-tertiary);
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+.pip-open-main {
+    width: 24px;
+    height: 24px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: var(--radius-sm);
+    background: transparent;
+    color: var(--text-tertiary);
+    transition: all var(--transition-fast);
+}
+
+.pip-open-main:hover {
+    background: var(--bg-elevated);
+    color: var(--accent-primary);
+}
+
+.pip-open-main svg {
+    width: 14px;
+    height: 14px;
+}
+
+/* Content */
+.pip-content {
+    flex: 1;
+    overflow: auto;
+    background: var(--bg-primary);
+}
+
+/* Resize handles */
+.pip-resize {
+    position: absolute;
+    z-index: 10;
+}
+
+.pip-resize.n {
+    top: 0;
+    left: 10px;
+    right: 10px;
+    height: 6px;
+    cursor: n-resize;
+}
+
+.pip-resize.s {
+    bottom: 0;
+    left: 10px;
+    right: 10px;
+    height: 6px;
+    cursor: s-resize;
+}
+
+.pip-resize.e {
+    right: 0;
+    top: 10px;
+    bottom: 10px;
+    width: 6px;
+    cursor: e-resize;
+}
+
+.pip-resize.w {
+    left: 0;
+    top: 10px;
+    bottom: 10px;
+    width: 6px;
+    cursor: w-resize;
+}
+
+.pip-resize.ne {
+    top: 0;
+    right: 0;
+    width: 12px;
+    height: 12px;
+    cursor: ne-resize;
+}
+
+.pip-resize.nw {
+    top: 0;
+    left: 0;
+    width: 12px;
+    height: 12px;
+    cursor: nw-resize;
+}
+
+.pip-resize.se {
+    bottom: 0;
+    right: 0;
+    width: 12px;
+    height: 12px;
+    cursor: se-resize;
+}
+
+.pip-resize.sw {
+    bottom: 0;
+    left: 0;
+    width: 12px;
+    height: 12px;
+    cursor: sw-resize;
+}
+
+/* Hover effects for resize handles */
+.pip-resize:hover {
+    background: rgba(var(--accent-primary), 0.1);
+}

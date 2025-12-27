@@ -1,0 +1,4 @@
+Google|https://google.com
+Google Search|https://www.google.com/search?q=kitabnugar
+Test|https://test.com
+YouTube|https://www.youtube.com/
